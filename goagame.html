@@ -1,0 +1,112 @@
+import React, { useState } from "react"; import { SmartphoneCharging, Phone, LogIn, ShieldCheck, QrCode, Copy } from "lucide-react";
+
+// ✅ Goa Game Login + Deposit Page (with QR) // - OTP login flow // - Deposit screen with PhonePe QR code demo
+
+const fakeSendOtp = async (mobile) => { await new Promise((r) => setTimeout(r, 700)); if (mobile.length === 10) return true; throw new Error("Invalid mobile number"); };
+
+const fakeVerifyOtp = async (mobile, otp) => { await new Promise((r) => setTimeout(r, 700)); if (otp === "1234") return { token: "fake-token", user: { mobile } }; throw new Error("Invalid OTP"); };
+
+export default function App() { const [route, setRoute] = useState("/login"); return ( <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-200"> {route === "/login" && <LoginPage onSuccess={() => setRoute("/dashboard")} />} {route === "/dashboard" && <Dashboard onLogout={() => setRoute("/login")} onDeposit={() => setRoute("/deposit")} />} {route === "/deposit" && <DepositPage onBack={() => setRoute("/dashboard")} />} <FooterNote /> </div> ); }
+
+function LoginPage({ onSuccess }) { const [mobile, setMobile] = useState(""); const [otpSent, setOtpSent] = useState(false); const [otp, setOtp] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState("");
+
+const handleSendOtp = async (e) => { e.preventDefault(); setLoading(true); setError(""); try { await fakeSendOtp(mobile.trim()); setOtpSent(true); } catch (err) { setError(err.message); } finally { setLoading(false); } };
+
+const handleVerifyOtp = async (e) => { e.preventDefault(); setLoading(true); setError(""); try { await fakeVerifyOtp(mobile.trim(), otp.trim()); onSuccess(); } catch (err) { setError(err.message); } finally { setLoading(false); } };
+
+return ( <div className="flex items-center justify-center py-16 px-4"> <div className="w-full max-w-md"> {/* Brand/Header */} <div className="text-center mb-6"> <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white shadow-sm"> <SmartphoneCharging className="w-5 h-5" /> <span className="font-semibold tracking-wide">Goa Game</span> </div> <h1 className="mt-4 text-2xl font-bold text-slate-800">Welcome</h1> <p className="text-slate-500 text-sm">Login with your mobile number</p> </div>
+
+{/* Card */}
+    <div className="bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-slate-200 p-6">
+      {!otpSent ? (
+        <form onSubmit={handleSendOtp} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Mobile Number</label>
+            <div className="relative">
+              <input
+                type="tel"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                placeholder="9999999999"
+                className="w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 px-4 py-2.5 outline-none"
+                required
+              />
+              <Phone className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-red-600 text-sm bg-red-50 border border-red-200 p-2 rounded-lg">{error}</div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white font-medium shadow hover:shadow-lg disabled:opacity-60"
+          >
+            <LogIn className="w-5 h-5" />
+            {loading ? "Sending..." : "Send OTP"}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={handleVerifyOtp} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Enter OTP</label>
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="1234"
+              className="w-full rounded-xl border border-slate-300 focus:border-slate-400 focus:ring-2 focus:ring-slate-200 px-4 py-2.5 outline-none"
+              required
+            />
+          </div>
+
+          {error && (
+            <div className="text-red-600 text-sm bg-red-50 border border-red-200 p-2 rounded-lg">{error}</div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 text-white font-medium shadow hover:shadow-lg disabled:opacity-60"
+          >
+            <ShieldCheck className="w-5 h-5" />
+            {loading ? "Verifying..." : "Verify OTP"}
+          </button>
+        </form>
+      )}
+    </div>
+
+    <p className="mt-4 text-xs text-slate-500 text-center">
+      Tip: use any 10-digit number and OTP <span className="font-semibold">1234</span> to preview.
+    </p>
+  </div>
+</div>
+
+); }
+
+function Dashboard({ onLogout, onDeposit }) { return ( <div className="max-w-5xl mx-auto py-10 px-4"> <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6"> <div className="flex items-center justify-between"> <div> <h2 className="text-xl font-bold text-slate-800">Goa Game Dashboard</h2> <p className="text-slate-600">You're signed in with OTP demo.</p> </div> <div className="flex gap-3"> <button onClick={onDeposit} className="px-4 py-2 rounded-xl bg-green-600 text-white font-medium shadow hover:shadow-lg inline-flex items-center gap-2"> <QrCode className="w-4 h-4" /> Deposit </button> <button onClick={onLogout} className="px-4 py-2 rounded-xl bg-slate-900 text-white font-medium shadow hover:shadow-lg">Logout</button> </div> </div> <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4"> {["Wallet", "Games", "Rewards"].map((k) => ( <div key={k} className="rounded-2xl border border-slate-200 bg-slate-50 p-5"> <div className="text-sm text-slate-500">{k}</div> <div className="mt-2 text-2xl font-semibold text-slate-800">--</div> </div> ))} </div> </div> </div> ); }
+
+function DepositPage({ onBack }) { const [copied, setCopied] = useState(false); const upiId = "nikhilarungawai@ybl"; // Example, replace with actual
+
+const handleCopy = () => { navigator.clipboard.writeText(upiId); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+
+return ( <div className="flex items-center justify-center py-16 px-4"> <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 p-6 text-center"> <h2 className="text-xl font-bold text-slate-800 mb-4">Deposit via PhonePe</h2> <img src="/phonepe-qr.png" alt="PhonePe QR" className="mx-auto w-64 h-64 border rounded-xl shadow mb-4" /> <p className="text-sm text-slate-600 mb-2">Scan this QR using PhonePe / any UPI app</p>
+
+<div className="flex items-center justify-center gap-2 mb-4">
+      <span className="font-mono text-slate-700 text-sm">{upiId}</span>
+      <button onClick={handleCopy} className="p-1 rounded-md bg-slate-100 hover:bg-slate-200">
+        <Copy className="w-4 h-4" />
+      </button>
+    </div>
+    {copied && <p className="text-green-600 text-xs mb-2">Copied!</p>}
+
+    <button onClick={onBack} className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-medium shadow hover:shadow-lg">Back to Dashboard</button>
+  </div>
+</div>
+
+); }
+
+function FooterNote() { return ( <div className="text-center text-[11px] text-slate-500 pb-6 px-4"> This is an educational clone UI for Goa Game. Replace with your backend and assets before production. </div> ); }
+
